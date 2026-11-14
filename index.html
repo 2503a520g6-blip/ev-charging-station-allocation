@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EV Charging Station Allocation System</title>
+  <!-- Zero external CDN dependencies - 100% locally styled and fast -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- ================= SIDEBAR NAVIGATION ================= -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-icon-box">
+        <!-- Embedded SVG Lightning Bolt -->
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-title">EV ChargeAlloc</div>
+        <div class="brand-subtitle">Smart Grid System</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Main Navigation</div>
+
+      <a class="nav-item active" data-tab="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        <span class="nav-label">Dashboard</span>
+      </a>
+
+      <a class="nav-item" data-tab="allocation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+        <span class="nav-label">Smart Allocation</span>
+        <span class="badge-counter" style="background-color:#059669;color:#fff;">AI</span>
+      </a>
+
+      <a class="nav-item" data-tab="stations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M2 20h20"></path><path d="M14 12v.01"></path></svg>
+        <span class="nav-label">Stations & Slots</span>
+      </a>
+
+      <div class="nav-section-label">User Services</div>
+
+      <a class="nav-item" data-tab="reservations">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <span class="nav-label">My Reservations</span>
+      </a>
+
+      <div class="nav-section-label">System Control</div>
+
+      <a class="nav-item" id="nav-admin-item" data-tab="admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        <span class="nav-label">Admin Control</span>
+      </a>
+
+      <a class="nav-item" data-tab="diagnostics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        <span class="nav-label">Grid Radar & Map</span>
+      </a>
+    </nav>
+
+    <!-- User Profile & Mode Switcher in Sidebar Footer -->
+    <div class="sidebar-footer">
+      <div class="user-profile-badge">
+        <div class="user-avatar" id="user-avatar-initials">AR</div>
+        <div class="user-info-text">
+          <div class="user-name" id="user-profile-name">Alex Rivera</div>
+          <div class="user-role-tag" id="user-profile-role">EV Driver</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;">
+        <button class="btn btn-sm btn-secondary" style="width:100%;font-size:11px;" id="role-toggle-btn" onclick="App.toggleCurrentRole()">
+          Switch to Admin
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN WRAPPER ================= -->
+  <div class="main-wrapper">
+    
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle Navigation">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <div class="page-title-box">
+          <h1>
+            <span>EV Charging Station Allocation System</span>
+          </h1>
+          <p>Real-Time Smart Station Discovery, Allocation & Reservation Engine</p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="system-status-indicator" title="Local SQLite Database Connected">
+          <span class="status-dot"></span>
+          <span>SQLite Connected</span>
+        </div>
+
+        <button class="btn btn-sm btn-secondary" onclick="App.resetDemoData()" title="Reset to standard 10+ stations & sample bookings">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Reset Demo
+        </button>
+
+        <button class="btn btn-sm btn-primary" onclick="App.switchTab('allocation')">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+          Smart Allocate
+        </button>
+      </div>
+    </header>
+
+    <!-- Content Body -->
+    <main class="content-body">
+
+      <!-- ================= 1. DASHBOARD VIEW ================= -->
+      <section class="view-section active" id="view-dashboard">
+        
+        <!-- Summary Cards Grid -->
+        <div class="stats-grid">
+          
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Total Stations</span>
+              <span class="stat-value" id="stat-total-stations">12</span>
+              <span class="stat-meta">Active Charging Hubs</span>
+            </div>
+            <div class="stat-icon icon-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M2 20h20"></path></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Available Stations</span>
+              <span class="stat-value" style="color:#059669;" id="stat-available-stations">11</span>
+              <span class="stat-meta">With Open Slots</span>
+            </div>
+            <div class="stat-icon icon-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Occupied Stations</span>
+              <span class="stat-value" style="color:#dc2626;" id="stat-occupied-stations">1</span>
+              <span class="stat-meta">100% Full Capacity</span>
+            </div>
+            <div class="stat-icon icon-red">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Total Slots</span>
+              <span class="stat-value" id="stat-total-slots">66</span>
+              <span class="stat-meta">DC Fast & AC Points</span>
+            </div>
+            <div class="stat-icon icon-indigo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Active Sessions</span>
+              <span class="stat-value" style="color:#2563eb;" id="stat-active-sessions">3</span>
+              <span class="stat-meta">Currently Charging</span>
+            </div>
+            <div class="stat-icon icon-emerald">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-content">
+              <span class="stat-label">Pending Bookings</span>
+              <span class="stat-value" style="color:#d97706;" id="stat-pending-reservations">1</span>
+              <span class="stat-meta">Awaiting Arrival</span>
+            </div>
+            <div class="stat-icon icon-amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Location Allocation Quick Banner -->
+        <div class="quick-alloc-card">
+          <div class="quick-alloc-info">
+            <h3>
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#34d399" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+              Smart Location Allocation Engine
+            </h3>
+            <p>
+              Simulate your vehicle location, battery status, and plug type. Our multi-factor algorithm scores distance (Haversine), slot availability, power delivery, and cost to assign the most optimal charging slot.
+            </p>
+            <div style="margin-top:10px;font-size:12px;color:#93c5fd;">
+              Current Simulated Location: <strong id="alloc-location-name" style="color:#ffffff;">Downtown Central</strong>
+            </div>
+          </div>
+          <div class="quick-alloc-controls">
+            <button class="btn btn-primary" onclick="App.switchTab('allocation')">
+              Open Smart Allocator
+            </button>
+            <button class="btn btn-secondary" onclick="App.runSmartAllocation(true)">
+              Quick Allocate
+            </button>
+          </div>
+        </div>
+
+        <!-- 2-Column Dashboard Main Section -->
+        <div class="dashboard-grid">
+          
+          <!-- Left Column: Real-time Station Availability Table -->
+          <div class="card">
+            <div class="card-header">
+              <h2>
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M2 20h20"></path></svg>
+                Charging Station Live Availability
+              </h2>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-sm btn-secondary" onclick="App.loadStations()">Refresh</button>
+                <button class="btn btn-sm btn-primary" onclick="App.switchTab('stations')">View All</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Station Name & Location</th>
+                    <th>Distance (ETA)</th>
+                    <th>Slots Free</th>
+                    <th>Max Output</th>
+                    <th>Connectors</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-stations-tbody">
+                  <!-- Populated dynamically via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Right Column: Charts & Utilization -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            
+            <!-- Pure SVG Slot Distribution Chart -->
+            <div class="card">
+              <div class="card-header">
+                <h2>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 1 10 10h-10z"></path></svg>
+                  Slot Availability Ratio
+                </h2>
+              </div>
+              <div class="card-body">
+                <div class="chart-container" id="chart-donut-slots">
+                  <!-- Rendered via charts.js -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Regional Zone Capacity Bars -->
+            <div class="card">
+              <div class="card-header">
+                <h2>
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                  Zone Capacity Distribution
+                </h2>
+              </div>
+              <div class="card-body" id="chart-zone-bars">
+                <!-- Rendered via charts.js -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Offline 2D Regional Map & Radar View -->
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header">
+            <h2>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+              Regional Grid & Station Radar (100% Offline Vector Simulation)
+            </h2>
+            <div style="font-size:12px;color:#64748b;">
+              Click any station pin to inspect slots • Click anywhere on map to reposition user
+            </div>
+          </div>
+          <div class="card-body" style="padding:0;">
+            <div class="map-container" id="map-viewport">
+              <!-- Rendered via map.js -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= 2. SMART ALLOCATION VIEW ================= -->
+      <section class="view-section" id="view-allocation">
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <h2>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+              Smart Allocation Engine — Multi-Criteria Optimization
+            </h2>
+            <button class="btn btn-sm btn-primary" onclick="App.runSmartAllocation(true)">
+              Run Optimization
+            </button>
+          </div>
+          <div class="card-body">
+            <div class="allocation-panel">
+              
+              <!-- Parameters Form -->
+              <div style="background:#f8fafc;padding:18px;border-radius:8px;border:1px solid #e2e8f0;">
+                <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:#1e3a8a;">1. Vehicle & Location Parameters</h3>
+                
+                <div class="form-group">
+                  <label>Select Simulated Location Preset:</label>
+                  <div class="preset-pills" id="preset-locations-box">
+                    <!-- Location preset buttons -->
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Latitude:</label>
+                    <input type="number" step="0.0001" id="alloc-lat" class="form-control" value="12.9716">
+                  </div>
+                  <div class="form-group">
+                    <label>Longitude:</label>
+                    <input type="number" step="0.0001" id="alloc-lng" class="form-control" value="77.5946">
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Plug / Connector Type:</label>
+                    <select id="alloc-connector" class="form-control">
+                      <option value="Any">Any Connector</option>
+                      <option value="CCS2" selected>CCS2 (Combined Fast DC)</option>
+                      <option value="Type 2">Type 2 (AC European Standard)</option>
+                      <option value="CHAdeMO">CHAdeMO (DC Fast Asian)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Minimum Power (kW):</label>
+                    <select id="alloc-min-power" class="form-control">
+                      <option value="0">Any Power Output</option>
+                      <option value="50">Fast DC (≥ 50 kW)</option>
+                      <option value="120">Ultra-Fast (≥ 120 kW)</option>
+                      <option value="150">Hyper-Charge (≥ 150 kW)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Current Battery SoC (%):</label>
+                    <input type="number" min="5" max="95" id="alloc-current-soc" class="form-control" value="20">
+                  </div>
+                  <div class="form-group">
+                    <label>Target Battery SoC (%):</label>
+                    <input type="number" min="30" max="100" id="alloc-target-soc" class="form-control" value="80">
+                  </div>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="App.runSmartAllocation(true)">
+                  ⚡ Find & Allocate Best Station
+                </button>
+              </div>
+
+              <!-- Recommendation Result Container -->
+              <div id="allocation-result-container">
+                <div style="background:#ffffff;border:1px dashed #cbd5e1;border-radius:10px;padding:40px;text-align:center;color:#64748b;">
+                  <div style="font-size:36px;margin-bottom:10px;">⚡</div>
+                  <div style="font-weight:700;font-size:16px;color:#1e293b;">Click "Run Optimization" or Select a Location</div>
+                  <p style="font-size:13px;max-width:400px;margin:8px auto;">
+                    The system will calculate distances using the Haversine formula, verify slot availability, evaluate speed factors, and allocate the optimal charging slot.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 3. STATIONS & SLOTS DIRECTORY ================= -->
+      <section class="view-section" id="view-stations">
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14"></path><path d="M2 20h20"></path></svg>
+              Complete EV Charging Station Directory
+            </h2>
+            <div style="display:flex;gap:10px;">
+              <input type="text" id="station-search-box" class="form-control" style="width:220px;padding:6px 12px;font-size:12.5px;" placeholder="Search name, zone, operator..." oninput="App.loadStations()">
+              <select id="station-conn-filter" class="form-control" style="width:130px;padding:6px;font-size:12px;" onchange="App.loadStations()">
+                <option value="all">All Plugs</option>
+                <option value="CCS2">CCS2</option>
+                <option value="Type 2">Type 2</option>
+                <option value="CHAdeMO">CHAdeMO</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Station Name & Address</th>
+                  <th>Distance (from User)</th>
+                  <th>Slots Status</th>
+                  <th>Power (kW)</th>
+                  <th>Supported Connectors</th>
+                  <th>Availability</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="full-stations-tbody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 4. MY RESERVATIONS VIEW ================= -->
+      <section class="view-section" id="view-reservations">
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              My EV Charging Reservations & Sessions
+            </h2>
+            <button class="btn btn-sm btn-secondary" onclick="App.loadReservations()">Refresh</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Station</th>
+                  <th>Assigned Slot</th>
+                  <th>Vehicle</th>
+                  <th>Schedule</th>
+                  <th>Est. Cost</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="reservations-tbody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 5. ADMIN CONTROL CENTER VIEW ================= -->
+      <section class="view-section" id="view-admin">
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div>
+            <h2 style="font-size:20px;font-weight:700;color:#0f172a;">Admin Control & Infrastructure Management</h2>
+            <p style="font-size:13px;color:#64748b;">Add, update, or remove charging stations, toggle slot occupancies, and monitor user bookings.</p>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn btn-primary" onclick="App.openAddStationModal()">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              Add Charging Station
+            </button>
+            <button class="btn btn-secondary" onclick="App.resetDemoData()">
+              Reset Demo Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Stations Management Table -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <h2>Station Infrastructure Registry</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Station Name & Location</th>
+                  <th>Zone</th>
+                  <th>Slots</th>
+                  <th>Power</th>
+                  <th>Tariff</th>
+                  <th>Status</th>
+                  <th>Admin Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-stations-tbody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Reservations Monitor -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <h2>All Active & Pending User Reservations</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Driver Name</th>
+                  <th>Station</th>
+                  <th>Slot</th>
+                  <th>Vehicle Plate</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-reservations-tbody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Registered Users Directory -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Registered EV Users</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User ID</th>
+                  <th>Full Name & Email</th>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>Vehicle Details</th>
+                  <th>Plug</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-tbody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= 6. RADAR & DIAGNOSTICS VIEW ================= -->
+      <section class="view-section" id="view-diagnostics">
+        <div class="card">
+          <div class="card-header">
+            <h2>
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+              Regional Grid Radar & Offline Geographic Simulation
+            </h2>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px;color:#475569;margin-bottom:14px;">
+              This offline vector radar renders real latitude and longitude positions across the metropolitan sector. Distance rings indicate 5 km, 10 km, and 15 km radiuses relative to your simulated vehicle location.
+            </p>
+            <div class="map-container" id="map-viewport-alt" style="height:480px;">
+              <!-- Map viewport cloned or refreshed -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ================= MODALS ================= -->
+
+<!-- 1. SLOT INSPECTOR MODAL -->
+<div class="modal-backdrop" id="modal-slot-inspector">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="inspector-station-title">Station Slots Inspector</h3>
+      <button class="close-btn" onclick="App.closeModal('modal-slot-inspector')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;">
+        Physical slot states in real-time. Admins can click "Toggle" to simulate plugged-in cars.
+      </div>
+      <div class="slot-grid" id="inspector-slots-container">
+        <!-- Dynamically rendered -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="App.closeModal('modal-slot-inspector')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. BOOKING MODAL -->
+<div class="modal-backdrop" id="modal-booking">
+  <div class="modal-box">
+    <form onsubmit="App.submitBooking(event)">
+      <div class="modal-header">
+        <h3>Reserve EV Charging Slot</h3>
+        <button type="button" class="close-btn" onclick="App.closeModal('modal-booking')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="booking-station-id">
+        <input type="hidden" id="booking-slot-id">
+
+        <div class="form-group">
+          <label>Charging Station:</label>
+          <input type="text" id="booking-station-name" class="form-control" readonly style="background:#f1f5f9;">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vehicle Model:</label>
+            <input type="text" id="booking-vehicle-model" class="form-control" required placeholder="e.g. Hyundai Ioniq 5">
+          </div>
+          <div class="form-group">
+            <label>License Plate:</label>
+            <input type="text" id="booking-vehicle-plate" class="form-control" required placeholder="e.g. KA-01-EV-4421">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Connector Type:</label>
+            <select id="booking-connector" class="form-control">
+              <option value="CCS2">CCS2 (DC Fast)</option>
+              <option value="Type 2">Type 2 (AC)</option>
+              <option value="CHAdeMO">CHAdeMO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duration (Hours):</label>
+            <select id="booking-duration" class="form-control">
+              <option value="0.5">30 Minutes (Quick Top-up)</option>
+              <option value="1.0" selected>1 Hour (Standard Charge)</option>
+              <option value="1.5">1.5 Hours</option>
+              <option value="2.0">2 Hours</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:12px;font-size:12.5px;color:#166534;margin-top:10px;">
+          ✓ Slot allocation is guaranteed upon confirmation. Free cancellation available at any time.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-booking')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Reservation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. ADD / EDIT STATION MODAL (ADMIN) -->
+<div class="modal-backdrop" id="modal-station-form">
+  <div class="modal-box">
+    <form onsubmit="App.submitStationForm(event)">
+      <div class="modal-header">
+        <h3 id="station-form-title">Add New Charging Station</h3>
+        <button type="button" class="close-btn" onclick="App.closeModal('modal-station-form')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="station-form-id">
+
+        <div class="form-group">
+          <label>Station Name:</label>
+          <input type="text" id="st-name" class="form-control" required placeholder="e.g. Central Tech Park Supercharger">
+        </div>
+
+        <div class="form-group">
+          <label>Street Address:</label>
+          <input type="text" id="st-address" class="form-control" required placeholder="e.g. 100 Outer Ring Road, Sector 3">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>City:</label>
+            <input type="text" id="st-city" class="form-control" value="Bengaluru" required>
+          </div>
+          <div class="form-group">
+            <label>Zone / Sector:</label>
+            <input type="text" id="st-zone" class="form-control" value="Metro Zone" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Latitude:</label>
+            <input type="number" step="0.0001" id="st-lat" class="form-control" required value="12.9716">
+          </div>
+          <div class="form-group">
+            <label>Longitude:</label>
+            <input type="number" step="0.0001" id="st-lng" class="form-control" required value="77.5946">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Total Slots:</label>
+            <input type="number" min="1" max="24" id="st-slots" class="form-control" value="4" required>
+          </div>
+          <div class="form-group">
+            <label>Max Power Output (kW):</label>
+            <input type="number" min="7" max="350" id="st-power" class="form-control" value="60" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Supported Connectors:</label>
+            <input type="text" id="st-connectors" class="form-control" value="CCS2, Type 2" required placeholder="e.g. CCS2, Type 2, CHAdeMO">
+          </div>
+          <div class="form-group">
+            <label>Tariff (₹ per kWh):</label>
+            <input type="number" step="0.5" id="st-price" class="form-control" value="15.00" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Charging Network / Operator:</label>
+          <input type="text" id="st-operator" class="form-control" value="Tata Power EZ" required>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-station-form')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Station</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= TOAST NOTIFICATIONS CONTAINER ================= -->
+<div id="toast-container"></div>
+
+<!-- Scripts -->
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/map.js"></script>
+<script src="/static/js/app.js"></script>
+
+</body>
+</html>
